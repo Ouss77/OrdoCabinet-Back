@@ -11,8 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.8",
-    "baseline-browser-mapping": "^2.11.29",
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "caniuse-lite": "^1.0.30001816",
     "cookie-parser": "^1.4.6",
