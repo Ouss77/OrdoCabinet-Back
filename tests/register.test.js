@@ -49,4 +49,41 @@ describe("Register Controller", () => {
         
 
     });
+
+    test("should reject duplicate username", async () => {
+        // Arrange
+        const req = {
+          body: {
+            username: "test",
+            fullName: "Test Doctor",
+            password: "password",   
+            cabinetName: "Test Cabinet"
+          }
+        };
+      
+        const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn().mockReturnThis()
+        };
+      
+        jest.spyOn(Admin, "findOne").mockResolvedValue({
+          username: "test"
+        });
+      
+        const saveSpy = jest.spyOn(Admin.prototype, "save");
+      
+        // Act
+        await register(req, res);
+      
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(409);
+      
+        expect(res.json).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: "Cet identifiant est déjà utilisé."
+          })
+        );
+      
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
 });
