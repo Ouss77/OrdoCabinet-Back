@@ -69,4 +69,85 @@ describe("Login Controller", () => {
     expect(res.json).toHaveBeenCalledWith({message: "Authentication failed. Wrong password." });
   });
 
+  test("should login successfully", async () => {
+    // ARRANGE
+    const req = {
+      body: {
+        username: "admin",
+        password: "123456"
+      }
+    };
+  
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+  
+    const mockUser = {
+      _id: "123",
+      username: "admin",
+      password: "hashedPassword",
+      fullName: "Admin Test",
+      cabinetName: "Cabinet Test",
+      toObject() {
+        return {
+          _id: this._id,
+          username: this.username,
+          password: this.password,
+          fullName: this.fullName,
+          cabinetName: this.cabinetName,
+        };
+      },
+    };
+  
+    // TODO 1 : Simuler Admin.findOne()
+    jest.spyOn(Admin, "findOne").mockResolvedValue(mockUser);
+  
+    // TODO 2 : Simuler bcrypt.compare()
+    jest.spyOn(bcrypt, "compare").mockResolvedValue(true);
+  
+    // ACT
+    // TODO 3 : Appeler login(req, res)
+    await login(req, res);
+    // ASSERT
+    // TODO 4 : Vérifier HTTP 200
+    expect(res.status).toHaveBeenCalledWith(200);
+  
+    // TODO 5 : Vérifier que la réponse contient :
+    expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Login successful",
+          username: "admin"
+        })
+      );  
+    // TODO 6 : Vérifier que la réponse
+    const responseBody = res.json.mock.calls[0][0];
+    expect(responseBody).not.toHaveProperty("password"); 
+ });
+
+    test("should return 500 when the database fails", async () => {
+        const req = {
+          body: {
+            username: "admin",
+            password: "123456",
+          },
+        };
+      
+        const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+        };
+      
+        jest.spyOn(Admin, "findOne").mockRejectedValue(new Error("Database error"));
+      
+        await login(req, res);
+      
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: "Internal server error",
+          })
+        );
+      });
+
 });
