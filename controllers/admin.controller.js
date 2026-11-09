@@ -14,6 +14,9 @@ const health = (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required." });
+    }
     const user = await Admin.findOne({ username });
 
     if (!user) {
