@@ -20,4 +20,5 @@ const belongsToCabinet = (req, doc) => {
   return docOwner === "";
 };
 
+
 module.exports = { ownerOf, cabinetFilter, belongsToCabinet };
