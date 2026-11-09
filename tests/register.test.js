@@ -86,4 +86,34 @@ describe("Register Controller", () => {
       
         expect(saveSpy).not.toHaveBeenCalled();
       });
+
+    test("should reject registration with missing fullName", async () => {
+        const req = {
+            body: {
+                username: "test",
+                email: "test@example.com",
+                password: "password",
+                cabinetName: "Test Cabinet"
+            }
+        }
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn().mockReturnThis(),
+        }
+
+
+        const findOneSpy = jest.spyOn(Admin, "findOne")
+        .mockResolvedValue(null);
+
+        await register(req, res);
+
+        expect(findOneSpy).not.toHaveBeenCalled();
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({message: "Nom, cabinet, identifiant et mot de passe sont requis."})
+        );
+    })
+
+    
 });
