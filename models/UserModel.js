@@ -18,8 +18,12 @@ const patientSchema = new mongoose.Schema({
   adresse: String,
   tel: String,
   CIN: String,
-  doctorUsername: { type: String, default: "", index: true },
-  medicalInfos: [medicalInfoSchema], 
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    required: true,
+    index: true,
+  },  medicalInfos: [medicalInfoSchema], 
   nextMedicalId: { type: Number, default: 1 }  // New field to track the next ID
 });
 

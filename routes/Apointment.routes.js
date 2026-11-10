@@ -1,4 +1,7 @@
+
 const express = require("express");
+const requireAuth = require("../middleware/requireAuth");
+
 const {
   createAppointment,
   listAppointmentsByDate,
@@ -6,6 +9,7 @@ const {
 } = require("../controllers/appointment.controller");
 
 const router = express.Router();
+router.use(requireAuth);
 
 router.post("/appointments", createAppointment);
 router.get("/appointments/:date", listAppointmentsByDate);

@@ -1,24 +1,16 @@
-const ownerOf = (req) => (req.get("x-cabinet-user") || "").trim();
+const ownerOf = (req) => req.user.id;
 
-const cabinetFilter = (req, extra = {}) => {
-  const owner = ownerOf(req);
-  if (owner) return { ...extra, doctorUsername: owner };
-  return {
-    ...extra,
-    $or: [
-      { doctorUsername: "" },
-      { doctorUsername: null },
-      { doctorUsername: { $exists: false } },
-    ],
-  };
-};
+const cabinetFilter = (req, extra = {}) => ({
+  ...extra,
+  doctorId: ownerOf(req),
+});
 
 const belongsToCabinet = (req, doc) => {
-  const owner = ownerOf(req);
-  const docOwner = doc?.doctorUsername || "";
-  if (owner) return docOwner === owner;
-  return docOwner === "";
+  return String(doc?.doctorId) === String(ownerOf(req));
 };
 
-
-module.exports = { ownerOf, cabinetFilter, belongsToCabinet };
+module.exports = {
+  ownerOf,
+  cabinetFilter,
+  belongsToCabinet,
+};

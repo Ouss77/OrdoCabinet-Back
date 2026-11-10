@@ -5,8 +5,12 @@ const visitSchema = new mongoose.Schema({
     prenom: String,
     patientId: String,
     motif: String,
-    doctorUsername: { type: String, default: "", index: true },
-    dateVisited: { type: Date, default: Date.now }
+    doctorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Admin",
+        required: true,
+        index: true,
+      },    dateVisited: { type: Date, default: Date.now }
 });
 
 const Visit = mongoose.model('Visit', visitSchema);

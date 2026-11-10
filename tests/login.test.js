@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const mockRes = () => ({
   status: jest.fn().mockReturnThis(),
   json: jest.fn().mockReturnThis(),
+  cookie: jest.fn().mockReturnThis(),
 });
 
 const existingUser = (overrides = {}) => ({
@@ -26,6 +27,17 @@ const existingUser = (overrides = {}) => ({
 });
 
 describe("Login Controller", () => {
+
+  const originalJwtSecret = process.env.JWT_SECRET;
+
+afterAll(() => {
+  if (originalJwtSecret === undefined) {
+    delete process.env.JWT_SECRET;
+  } else {
+    process.env.JWT_SECRET = originalJwtSecret;
+  }
+});
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -106,7 +118,17 @@ describe("Login Controller", () => {
     jest.spyOn(Admin, "findOne").mockResolvedValue(existingUser());
     jest.spyOn(bcrypt, "compare").mockResolvedValue(true);
 
+    process.env.JWT_SECRET = "test-secret-for-jest-only";
     await login(req, res);
+    expect(res.cookie).toHaveBeenCalledWith(
+      "auth_token",
+      expect.any(String),
+      expect.objectContaining({
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 8 * 60 * 60 * 1000,
+      })
+    );
 
     expect(Admin.findOne).toHaveBeenCalledWith({ username: "admin" });
     expect(bcrypt.compare).toHaveBeenCalledWith("123456", "hashedPassword");

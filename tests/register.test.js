@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const mockRes = () => ({
   status: jest.fn().mockReturnThis(),
   json: jest.fn().mockReturnThis(),
+  cookie: jest.fn().mockReturnThis(),
 });
 
 const validBody = (overrides = {}) => ({

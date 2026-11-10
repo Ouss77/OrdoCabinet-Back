@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const Admin = require("../models/AdminModel");
 
 const publicUser = (user) => {
@@ -28,22 +29,37 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Authentication failed. Wrong password." });
     }
 
-    res.status(200).json({ message: "Login successful", ...publicUser(user) });
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not configured");
+    }
+    
+    const token = jwt.sign(
+      { userId: user._id.toString() },
+      process.env.JWT_SECRET,
+      {
+        algorithm: "HS256",
+        expiresIn: "8h",
+      }
+    );
+    
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 8 * 60 * 60 * 1000,
+      path: "/",
+    });
+    
+    return res.status(200).json({
+      message: "Login successful",
+      ...publicUser(user),
+    });
+  
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
-const addUser = async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await new Admin({ username, password: hashedPassword }).save();
-    res.status(201).json(publicUser(user));
-  } catch (err) {
-    res.status(500).json({ message: "Internal server error", error: err.message });
-  }
-};
 
 const register = async (req, res) => {
   try {
@@ -80,25 +96,48 @@ const register = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { username } = req.body;
-    if (!username) {
-      return res.status(400).json({ message: "Identifiant requis." });
-    }
+    const allowed = [
+      "fullName",
+      "specialty",
+      "cabinetName",
+      "phone",
+      "email",
+      "city",
+      "address",
+    ];
 
-    const allowed = ["fullName", "specialty", "cabinetName", "phone", "email", "city", "address", "plan"];
     const patch = {};
+
     allowed.forEach((key) => {
-      if (req.body[key] !== undefined) patch[key] = req.body[key];
+      if (req.body[key] !== undefined) {
+        patch[key] = req.body[key];
+      }
     });
 
-    const user = await Admin.findOneAndUpdate({ username }, patch, { new: true });
+    const user = await Admin.findByIdAndUpdate(
+      req.user.id,
+      { $set: patch },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
     if (!user) {
-      return res.status(404).json({ message: "Cabinet introuvable." });
+      return res.status(404).json({
+        message: "Compte introuvable.",
+      });
     }
-    res.status(200).json({ message: "Profil mis à jour", ...publicUser(user) });
-  } catch (err) {
-    res.status(500).json({ message: "Internal server error", error: err.message });
+
+    return res.status(200).json({
+      message: "Profil mis à jour",
+      ...publicUser(user),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Impossible de mettre à jour le profil.",
+    });
   }
 };
 
-module.exports = { health, login, addUser, register, updateProfile };
+module.exports = { health, login, register, updateProfile };

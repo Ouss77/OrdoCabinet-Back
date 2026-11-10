@@ -1,4 +1,6 @@
+const mongoose = require("mongoose");
 const Appointment = require("../models/Apointment.model");
+const Patient = require("../models/UserModel");
 const { ownerOf, cabinetFilter, belongsToCabinet } = require("../utils/cabinet");
 
 const normalizeTime = (time) => {
@@ -18,10 +20,31 @@ const createAppointment = async (req, res) => {
     const patientId = String(req.body.patientId || "").trim();
     const comment = String(req.body.comment || "").trim();
 
+
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !time || !patientName) {
       return res.status(400).json({ message: "Date, heure et patient sont requis." });
     }
-
+    if (patientId) {
+      if (!mongoose.isValidObjectId(patientId)) {
+        return res.status(400).json({
+          message: "Identifiant du patient invalide.",
+        });
+      }
+    
+      const patient = await Patient.findById(patientId);
+    
+      if (!patient) {
+        return res.status(404).json({
+          message: "Patient introuvable.",
+        });
+      }
+    
+      if (!belongsToCabinet(req, patient)) {
+        return res.status(403).json({
+          message: "Ce patient appartient à un autre cabinet.",
+        });
+      }
+    }
     const existing = await Appointment.find(cabinetFilter(req, { date }));
     const taken = existing.some((item) => normalizeTime(item.time) === time);
     if (taken) {
@@ -35,7 +58,7 @@ const createAppointment = async (req, res) => {
       patientId,
       note: patientName,
       comment,
-      doctorUsername: ownerOf(req),
+      doctorId: ownerOf(req),
     }).save();
 
     res.status(201).json(saved);

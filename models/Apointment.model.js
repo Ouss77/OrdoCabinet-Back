@@ -7,8 +7,12 @@ const appointmentSchema = new mongoose.Schema({
   patientId: { type: String, default: "" },
   note: { type: String, default: "" },
   comment: { type: String, default: "" },
-  doctorUsername: { type: String, default: "", index: true },
-});
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    required: true,
+    index: true,
+  },});
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);
 

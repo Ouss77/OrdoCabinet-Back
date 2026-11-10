@@ -12,7 +12,7 @@ const createPatient = async (req, res) => {
       adresse: req.body.adresse,
       tel: req.body.tel,
       CIN: req.body.CIN,
-      doctorUsername: ownerOf(req),
+      doctorId: ownerOf(req),
     });
     const savedPatient = await newPatient.save();
     res.status(201).json(savedPatient);
@@ -77,7 +77,7 @@ const getPatientId = async (req, res) => {
 
 const getMedicalInfo = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.patientId, "medicalInfos doctorUsername");
+    const patient = await Patient.findById(req.params.patientId, "medicalInfos doctorId");
     if (!patient) {
       return res.status(404).json({ message: "Patient not found" });
     }
@@ -120,7 +120,7 @@ const updatePatient = async (req, res) => {
     }
 
     const updates = { ...req.body };
-    delete updates.doctorUsername;
+    delete updates.doctorId;
     const updatedPatient = await Patient.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.status(200).json(updatedPatient);
   } catch (error) {

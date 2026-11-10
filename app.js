@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const { clientOrigin } = require("./config/env");
 
@@ -10,12 +11,16 @@ const appointmentRoutes = require("./routes/Apointment.routes");
 const medicamentRoutes = require("./routes/medicament.routes");
 
 const app = express();
-
+app.use(express.json());
+app.use(cookieParser());
 app.use(helmet());
+
 app.use(cors({
   origin: clientOrigin,
-  allowedHeaders: ["Content-Type", "x-cabinet-user"],
+  credentials: true,
+  allowedHeaders: ["Content-Type"],
 }));
+
 app.use(express.json());
 
 app.use("/api/users", userRoutes);

@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const Visit = require("../models/VisitModel");
 const { ownerOf, cabinetFilter, belongsToCabinet } = require("../utils/cabinet");
+const Patient = require("../models/UserModel");
 
 const listVisits = async (req, res) => {
   try {
@@ -12,19 +14,44 @@ const listVisits = async (req, res) => {
 
 const addVisit = async (req, res) => {
   const { nom, prenom, motif, patientId } = req.body;
+
   try {
+    if (!patientId || !mongoose.isValidObjectId(patientId)) {
+      return res.status(400).json({
+        message: "Identifiant du patient invalide.",
+      });
+    }
+
+    const patient = await Patient.findById(patientId);
+
+    if (!patient) {
+      return res.status(404).json({
+        message: "Patient introuvable.",
+      });
+    }
+
+    if (!belongsToCabinet(req, patient)) {
+      return res.status(403).json({
+        message: "Ce patient appartient à un autre cabinet.",
+      });
+    }
+
     const newVisit = new Visit({
       nom,
       prenom,
       patientId,
       motif,
-      doctorUsername: ownerOf(req),
+      doctorId: ownerOf(req),
       dateVisited: new Date(),
     });
+
     await newVisit.save();
-    res.status(201).send(newVisit);
+
+    return res.status(201).json(newVisit);
   } catch (error) {
-    res.status(500).json({ message: "Error saving visit", error });
+    return res.status(500).json({
+      message: "Error saving visit",
+    });
   }
 };
 
